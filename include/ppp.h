@@ -3,13 +3,6 @@
 
 #include <Arduino.h>
 
-// --- pump define ---
-#define pump_pin 2
-#define pump_period 500U
-#define pump_time 200U
-bool pump_on = false;
-unsigned long pump_millis = 0;
-
 //--- preasure define ---
 #define preasure_pin A0
 #define preasure_pin_lovl 204.0  // 1V
@@ -30,6 +23,9 @@ unsigned long preasure_sensor_millis = 0;
 bool vacum_sensor_curr = 0;
 bool vacum_sensor_new = 0;
 unsigned long vacum_sensor_millis = 0;
+
+// --- pump define ---
+#define pump_pin 2
 
 //--- magnit define ---
 #define magnit_relay_on 6
@@ -59,8 +55,7 @@ uint8_t btn_curr = 0;
 namespace IOPin
 {
   void setupio();
-  void set_pump(bool pon);
-  void poolpump();
+  void pumprelay(bool pon);
   float preasureRead();
   void vacumrelay(bool von, bool voff);
   bool vacumSensorRead();
@@ -77,10 +72,6 @@ namespace IOPin
 
 void IOPin::setupio()
 {
-  //--- pump initialize ---
-  pinMode(pump_pin, OUTPUT);
-  digitalWrite(pump_pin, 0);
-
   //--- preasure initialize ---
   pinMode(preasure_pin, INPUT);
 
@@ -88,6 +79,9 @@ void IOPin::setupio()
   pinMode(vacum_sensor_pin, INPUT);
   pinMode(vacum_relay_on, OUTPUT);
   pinMode(vacum_relay_off, OUTPUT);
+
+  //--- pump initialize ---
+  pinMode(pump_pin, OUTPUT);
 
   //--- magnit initialize ---
   pinMode(magnit_relay_on, OUTPUT);
@@ -106,28 +100,8 @@ void IOPin::setupio()
   vacumrelay(false,false);
   waterrelay(false);
   magnitrelay(false);
+  pumprelay(false);
   set_ind_err(false);
-  set_pump(true);
-}
-
-void IOPin::set_pump(bool pon)
-{
-  pump_on = pon;
-  if (pump_on)
-    Serial.println("Pump=On");
-  else
-    Serial.println("Pump=Off");
-}
-
-//--- Pump ---
-void IOPin::poolpump()
-{
-  if (millis() - pump_millis > pump_period)
-    pump_millis = millis();
-  if (pump_on && millis() - pump_millis < pump_time)
-    digitalWrite(pump_pin, 1);
-  else
-    digitalWrite(pump_pin, 0);
 }
 
 //--- Preasure ---
@@ -183,6 +157,13 @@ void IOPin::vacumrelay_off(bool vof)
 {
   digitalWrite(vacum_relay_off, !vof);
 }
+
+//--- Pump ---
+void IOPin::pumprelay(bool pon)
+{
+  digitalWrite(pump_pin, !pon);
+}
+
 
 //--- Magnit ---
 void IOPin::magnitrelay(bool mon)

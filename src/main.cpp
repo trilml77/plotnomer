@@ -14,11 +14,10 @@ bool preasure_view_on = false;
 bool preasure_on_view = false;
 unsigned long preasure_view_millis = 0;
 
-const unsigned long preasure_time[] = {10000, 30000, 180000, 30000};
+const unsigned long preasure_time[] = {15000, 30000, 180000, 30000};
 bool preasure_on = false;
 unsigned int preasure_step = 0;
 unsigned long preasure_millis = 0;
-bool pump_last = false;
 
 void set_preasureview(bool von)
 {
@@ -72,17 +71,15 @@ void set_preasure(bool pon)
     }
     preasure_millis = millis();
     preasure_step = 0;
-    pump_last = pump_on;
-    IOPin::set_pump(false);
     Serial.println("Metr=On");
   }
   else
   {
     if (preasure_view_on) set_preasureview(false);
     IOPin::vacumrelay(false, true);
+    IOPin::pumprelay(false);
     IOPin::magnitrelay(false);
     IOPin::set_water(false);
-    IOPin::set_pump(pump_last);
     Serial.println("Metr=Off");
   }
   Serial.flush();
@@ -126,8 +123,17 @@ void poolpreasure()
   //--- Check Sensor ---
   if (preasure_step == 0)
   {
-    IOPin::vacumrelay(true, false);
-
+    if (millis() - preasure_millis < preasure_time[preasure_step] / 3)
+    {
+      IOPin::vacumrelay(false, true);
+      IOPin::pumprelay(true);
+    }
+    else
+    {
+      IOPin::vacumrelay(true, false);
+      IOPin::pumprelay(false);
+    }
+    
     if (millis() - preasure_millis > preasure_time[preasure_step])
     {
       set_preasure(false);
@@ -188,7 +194,6 @@ void poolpreasure()
 
 void prb_init()
 {
-  if (pump_on) IOPin::set_pump(false);
   if (water_on) IOPin::set_water(false);
   if (preasure_on) set_preasure(false);
   if (preasure_view_on) set_preasureview(false);
@@ -204,9 +209,6 @@ void poolcmd()
   char ch = Serial.read();
   if (ch == char(13))
   {
-    if (cmd == "p0") IOPin::set_pump(false);
-    if (cmd == "p1") IOPin::set_pump(true);
-
     if (cmd == "v0") set_preasureview(false);
     if (cmd == "v1") set_preasureview(true);
 
@@ -286,6 +288,19 @@ void poolcmd()
       Serial.flush();
     }
 
+    if (cmd == "rp0") 
+    {
+      IOPin::pumprelay(false);
+      Serial.println("rp=Off");
+      Serial.flush();
+    }
+    if (cmd == "rp1") 
+    {
+      IOPin::pumprelay(true);
+      Serial.println("rp=On");
+      Serial.flush();
+    }
+
     cmd = "";
     return;
   }
@@ -355,7 +370,7 @@ void setup()
   MsTimer2::set(preasure_view_period, preasureview);
   MsTimer2::start();
 
- // IOPin::set_pump(true);
+  prb_init();
 }
 
 void loop()
@@ -363,7 +378,6 @@ void loop()
   poolcmd();
   poolpreasure();
   IOPin::poolwater();
-  IOPin::poolpump();
   IOPin::poolbtn();
   Ekr::poolekr();
   pollmenu();
