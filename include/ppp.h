@@ -19,7 +19,7 @@ unsigned long preasure_sensor_millis = 0;
 #define vacum_sensor_pin 3
 #define vacum_relay_on 4
 #define vacum_relay_off 5
-#define vacum_sensor_delay 100U
+#define vacum_sensor_delay 200U
 bool vacum_sensor_curr = 0;
 bool vacum_sensor_new = 0;
 unsigned long vacum_sensor_millis = 0;

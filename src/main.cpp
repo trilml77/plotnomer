@@ -14,7 +14,7 @@ bool preasure_view_on = false;
 bool preasure_on_view = false;
 unsigned long preasure_view_millis = 0;
 
-const unsigned long preasure_time[] = {15000, 30000, 180000, 30000};
+const unsigned long preasure_time[] = {30000, 30000, 180000, 30000};
 bool preasure_on = false;
 unsigned int preasure_step = 0;
 unsigned long preasure_millis = 0;
