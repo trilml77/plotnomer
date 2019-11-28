@@ -32,7 +32,7 @@ unsigned long vacum_sensor_millis = 0;
 
 //--- water define ---
 #define water_relay_on 7
-const unsigned long water_time[] = {10000, 20000, 10000};
+const unsigned long water_time[] = {10000, 1000, 20000, 1000, 10000, 1000};
 bool water_on = false;
 unsigned long water_millis = 0;
 unsigned long water_millis_view = 0;
@@ -97,7 +97,7 @@ void IOPin::setupio()
   //--- inderr initialize ---
   pinMode(inderr_pin,INPUT);
 
-  vacumrelay(false,false);
+  vacumrelay(false,true);
   waterrelay(false);
   magnitrelay(false);
   pumprelay(false);
@@ -124,8 +124,8 @@ float IOPin::preasureRead()
 //--- Vacum ---
 void IOPin::vacumrelay(bool von, bool voff)
 {
-  digitalWrite(vacum_relay_on, !von);
-  digitalWrite(vacum_relay_off, !voff);
+  vacumrelay_on(von);
+  vacumrelay_off(voff);
 }
 
 bool IOPin::vacumSensorRead()
@@ -155,7 +155,7 @@ void IOPin::vacumrelay_on(bool von)
 
 void IOPin::vacumrelay_off(bool vof)
 {
-  digitalWrite(vacum_relay_off, !vof);
+  digitalWrite(vacum_relay_off, vof);
 }
 
 //--- Pump ---
@@ -186,15 +186,17 @@ void IOPin::set_water(bool won)
     water_millis = millis();
     water_millis_view = millis();
     water_step = 0;
+    vacumrelay(false,false);
+    waterrelay(true);
   }
   else
   {
     Serial.println("Water=Off");
+    vacumrelay(false,true);
+    pumprelay(false);
+    waterrelay(false);
   }
   Serial.flush();
-
-  vacumrelay(false,false);
-  waterrelay(water_on);
 }
 
 void IOPin::poolwater()
@@ -205,14 +207,31 @@ void IOPin::poolwater()
   {
     case 0 :
         vacumrelay(false,true);
+        pumprelay(true);
         waterrelay(false);
         break;
+
     case 1 :
         vacumrelay(false,false);
+        pumprelay(false);
+        break;
+
+    case 2 :
         waterrelay(true);
         break;
-    case 2 :
+
+    case 3 :
+        waterrelay(false);
+        break;
+
+    case 4 :
         vacumrelay(false,true);
+        pumprelay(true);
+        break;
+
+    case 5 :
+        vacumrelay(false,true);
+        pumprelay(false);
         waterrelay(false);
         break;
   }

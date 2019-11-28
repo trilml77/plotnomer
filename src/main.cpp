@@ -14,7 +14,8 @@ bool preasure_view_on = false;
 bool preasure_on_view = false;
 unsigned long preasure_view_millis = 0;
 
-const unsigned long preasure_time[] = {30000, 30000, 180000, 30000};
+const unsigned long preasure_time[] = {60000, 30000, 180000, 30000};
+#define preasure_produvka 10000U
 bool preasure_on = false;
 unsigned int preasure_step = 0;
 unsigned long preasure_millis = 0;
@@ -41,6 +42,8 @@ void preasureview()
     {
       rs += "tm=";
       rs += String(millis() - preasure_view_millis);
+      rs += ",ps=";
+      rs += String(preasure_step);
       rs += ",";
     }
     if (water_on)
@@ -123,7 +126,7 @@ void poolpreasure()
   //--- Check Sensor ---
   if (preasure_step == 0)
   {
-    if (millis() - preasure_millis < preasure_time[preasure_step] / 3)
+    if (millis() - preasure_millis < preasure_produvka)
     {
       IOPin::vacumrelay(false, true);
       IOPin::pumprelay(true);
@@ -146,6 +149,7 @@ void poolpreasure()
       preasure_pd_lst[preasure_step] = IOPin::preasureRead();
       preasure_pd_max[preasure_step] = preasure_pd_lst[preasure_step];
       preasure_millis = millis();
+      preasure_view_millis = millis();
       IOPin::magnitrelay(true);
       preasure_step++;
     }
@@ -154,12 +158,14 @@ void poolpreasure()
   //--- maxPD  and lastPD---
   if (preasure_step > 0)
   {
+    /*
     if (!vsens)
     {
       set_preasure(false);
       preasurePrintErr(2);
     }
-
+    */
+   
     float pd = IOPin::preasureRead();
     if (pd > preasure_pd_max[preasure_step])
       preasure_pd_max[preasure_step] = pd;
