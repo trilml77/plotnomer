@@ -3,22 +3,41 @@
 
 #include <ppp.h>
 
-float preasure_pd_max[] = {0, 0, 0, 0};
-float preasure_pd_lst[] = {0, 0, 0, 0};
+float preasure_pd_max[] = {0, 0, 0};
+float preasure_pd_lst[] = {0, 0, 0};
 
-#include <mat.h>
-#include <ekr.h>
 
 #define preasure_view_period 500U
 bool preasure_view_on = false;
-bool preasure_on_view = false;
 unsigned long preasure_view_millis = 0;
 
-const unsigned long preasure_time[] = {60000, 30000, 180000, 30000};
-#define preasure_produvka 10000U
+const unsigned long preasure_time[] = 
+{
+ /* 
+  240000,  // balon pump on
+  10000,   // produvka pump on
+  30000,   // vacum senson check
+  30000,   // zamer dp 0
+  180000,  // zamer dp 1
+  30000    // zamer dp 2
+*/
+
+  10000,   // balon pump on
+  10000,   // produvka pump on
+  10000,   // vacum senson check
+  10000,   // zamer dp 0
+  10000,   // zamer dp 1
+  10000    // zamer dp 2
+
+};
+
 bool preasure_on = false;
 unsigned int preasure_step = 0;
+unsigned int preasure_step_pd = 0;
 unsigned long preasure_millis = 0;
+
+#include <mat.h>
+#include <ekr.h>
 
 void set_preasureview(bool von)
 {
@@ -42,8 +61,13 @@ void preasureview()
     {
       rs += "tm=";
       rs += String(millis() - preasure_view_millis);
-      rs += ",ps=";
+      rs += ",ps=";      
       rs += String(preasure_step);
+      rs += ",gs=";
+      if (preasure_step > 2)
+        rs += String(preasure_step_pd);
+      else
+        rs +="-1";      
       rs += ",";
     }
     if (water_on)
@@ -66,23 +90,26 @@ void set_preasure(bool pon)
   preasure_on = pon;
   if (preasure_on)
   {
-    int cnn = sizeof(preasure_time) / sizeof(preasure_time[0]);
+    int cnn = sizeof(preasure_pd_max) / sizeof(preasure_pd_max[0]);
     for (int ii = 0; ii < cnn; ii++)
     {
-      preasure_pd_lst[ii] = 0;
       preasure_pd_max[ii] = 0;
+      preasure_pd_lst[ii] = 0;
     }
     preasure_millis = millis();
     preasure_step = 0;
+    preasure_step_pd = 0;
+    IOPin::vacumblPump(true);
     Serial.println("Metr=On");
+    set_preasureview(true);
   }
   else
   {
-    if (preasure_view_on) set_preasureview(false);
     IOPin::vacumrelay(false, true);
     IOPin::pumprelay(false);
     IOPin::magnitrelay(false);
     IOPin::set_water(false);
+    IOPin::vacumblPump(false);
     Serial.println("Metr=Off");
   }
   Serial.flush();
@@ -101,18 +128,23 @@ void preasurePrintAll()
   String rs = "mv=1";
 
   rs += ",dh1=";
-  rs +=  String(Mth::density(preasure_pd_max[1]),2);
+  rs +=  String(Mth::density(preasure_pd_max[0]),2);
   rs += ",dl1=";
-  rs +=  String(Mth::density(preasure_pd_lst[1]),2);
+  rs +=  String(Mth::density(preasure_pd_lst[0]),2);
+  float pr1 = Mth::procent_p(preasure_pd_max[0],preasure_pd_lst[0]);
   rs += ",pr1=";
-  rs +=  String(Mth::procent_p(preasure_pd_max[1],preasure_pd_lst[1]),0);
+  rs +=  String(pr1,2);
 
   rs += ",dh2=";
-  rs +=  String(Mth::density(preasure_pd_max[3]),2);
+  rs +=  String(Mth::density(preasure_pd_max[2]),2);
   rs += ",dl2=";
-  rs +=  String(Mth::density(preasure_pd_lst[3]),2);
+  rs +=  String(Mth::density(preasure_pd_lst[2]),2);
+  float pr2 = Mth::procent_m(preasure_pd_max[2],preasure_pd_lst[2]);
   rs += ",pr2=";
-  rs +=  String(Mth::procent_m(preasure_pd_max[3],preasure_pd_lst[3]),0);
+  rs +=  String(pr2,2);
+  rs += ",pr3=";
+  rs +=  String(Mth::procent_pm(pr1,pr2),2);
+
 
   Serial.println(rs);
   Serial.flush();
@@ -120,43 +152,55 @@ void preasurePrintAll()
 
 void poolpreasure()
 {
-  bool vsens = IOPin::vacumSensorRead();
   if (!preasure_on) return;
 
-  //--- Check Sensor ---
+  //--- balon pump On ---
   if (preasure_step == 0)
   {
-    if (millis() - preasure_millis < preasure_produvka)
+    if (millis() - preasure_millis > preasure_time[preasure_step])
     {
       IOPin::vacumrelay(false, true);
       IOPin::pumprelay(true);
+      preasure_millis = millis();
+      preasure_step++;
     }
-    else
+  }
+
+  //--- Pump produvka On ---
+  if (preasure_step == 1)
+  {
+    if (millis() - preasure_millis > preasure_time[preasure_step])
     {
       IOPin::vacumrelay(true, false);
       IOPin::pumprelay(false);
+      preasure_millis = millis();
+      preasure_step++;
     }
-    
+  }
+
+  //--- Check Sensor vacum ---
+  if (preasure_step == 2)
+  {
     if (millis() - preasure_millis > preasure_time[preasure_step])
     {
       set_preasure(false);
       preasurePrintErr(1);
     }
 
+    bool vsens = IOPin::vacumSensorRead();
     if (vsens)
     {
+      IOPin::vacumblPump(false);
       IOPin::vacumrelay(false, false);
-      preasure_pd_lst[preasure_step] = IOPin::preasureRead();
-      preasure_pd_max[preasure_step] = preasure_pd_lst[preasure_step];
-      preasure_millis = millis();
-      preasure_view_millis = millis();
       IOPin::magnitrelay(true);
+      preasure_view_millis = millis();
+      preasure_millis = millis();
       preasure_step++;
     }
   }
 
   //--- maxPD  and lastPD---
-  if (preasure_step > 0)
+  if (preasure_step > 2)
   {
     /*
     if (!vsens)
@@ -167,21 +211,18 @@ void poolpreasure()
     */
    
     float pd = IOPin::preasureRead();
-    if (pd > preasure_pd_max[preasure_step])
-      preasure_pd_max[preasure_step] = pd;
+    if (pd > preasure_pd_max[preasure_step_pd])
+      preasure_pd_max[preasure_step_pd] = pd;
 
-    if (millis() - preasure_millis > preasure_time[preasure_step])
+    if (millis() - preasure_millis > preasure_time[preasure_step_pd])
     {
-      preasure_pd_lst[preasure_step] = pd;
+      preasure_pd_lst[preasure_step_pd] = pd;
+      preasure_step_pd++;
       preasure_millis = millis();
       preasure_step++;
       preasurePrintAll();
     }
   }
-
-  //--- view on step 1 ---
-  if (preasure_step == 1 && preasure_on_view && !preasure_view_on)
-    set_preasureview(true);
 
   unsigned int cnn = sizeof(preasure_time) / sizeof(preasure_time[0]);
 
@@ -228,8 +269,8 @@ void poolcmd()
     if (cmd == "mt")
     {
       prb_init();
-      preasure_on_view = true;
       set_preasure(true);
+      Ekr::set_menu_item(0);
     }
 
     if (cmd == "mv") preasurePrintAll();
@@ -237,8 +278,8 @@ void poolcmd()
     if (cmd == "cl")
     {
       prb_init();
-      preasure_on_view = true;
       IOPin::set_water(true);
+      Ekr::set_menu_item(1);
     }
 
     if (cmd == "rm0") 
@@ -307,6 +348,19 @@ void poolcmd()
       Serial.flush();
     }
 
+    if (cmd == "rb0") 
+    {
+      IOPin::vacumblPump(false);
+      Serial.println("rb=Off");
+      Serial.flush();
+    }
+    if (cmd == "rb1") 
+    {
+      IOPin::vacumblPump(true);
+      Serial.println("rb=On");
+      Serial.flush();
+    }
+
     cmd = "";
     return;
   }
@@ -335,7 +389,6 @@ void pollmenu()
     if(!preasure_on)
     {
       prb_init();
-      preasure_on_view = true;
       set_preasure(true);
     }
     Ekr::set_menu_curr(0);
@@ -345,7 +398,6 @@ void pollmenu()
     if(!water_on)
     {
       prb_init();
-      preasure_on_view = true;
       IOPin::set_water(true);
     }
     Ekr::set_menu_curr(1);
@@ -382,6 +434,7 @@ void setup()
 void loop()
 {
   poolcmd();
+  IOPin::poolsensors();
   poolpreasure();
   IOPin::poolwater();
   IOPin::poolbtn();

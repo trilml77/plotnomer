@@ -3,19 +3,19 @@
 
 #include <Arduino.h>
 
-//--- preasure define ---
+//--- preasure sensor define ---
 #define preasure_pin A0
 #define preasure_pin_lovl 204.0  // 1V
 #define preasure_pin_hivl 1023.0 // 5V
 #define preasure_pin_lodp 0.0    // 0 kPa
 #define preasure_pin_hidp 8.0    // 8 kPa
-#define preasure_pin_tm 50U
+#define preasure_pin_tm 100U
 #define preasure_pin_cn 5U
 float preasure_sensor_curr = 0;
 float preasure_sensor_sum = 0;
 unsigned long preasure_sensor_millis = 0;
 
-//--- vacum define ---
+//--- vacum sensor define ---
 #define vacum_sensor_pin 3
 #define vacum_relay_on 4
 #define vacum_relay_off 5
@@ -23,6 +23,21 @@ unsigned long preasure_sensor_millis = 0;
 bool vacum_sensor_curr = 0;
 bool vacum_sensor_new = 0;
 unsigned long vacum_sensor_millis = 0;
+
+//--- vacum balon sensor ---
+#define vacumbl_pin A2
+#define vacumbl_pin_lovl 204.0  // 1V
+#define vacumbl_pin_hivl 1023.0 // 5V
+#define vacumbl_pin_lodp 0.0    // 0 kPa
+#define vacumbl_pin_hidp 8.0    // 8 kPa
+#define vacumbl_pin_tm 100U
+#define vacumbl_pin_cn 5U
+float vacumbl_sensor_curr = 0;
+float vacumbl_sensor_sum = 0;
+unsigned long vacumbl_sensor_millis = 0;
+
+//--- vacum balon pump ---
+#define vacumbl_pump_pin 13  
 
 // --- pump define ---
 #define pump_pin 2
@@ -68,6 +83,9 @@ namespace IOPin
   uint8_t get_button();
   void poolbtn(); 
   void set_ind_err(bool err);
+  float vacumblRead();
+  void vacumblPump(bool pon);
+  void poolsensors();
 } 
 
 void IOPin::setupio()
@@ -79,6 +97,10 @@ void IOPin::setupio()
   pinMode(vacum_sensor_pin, INPUT);
   pinMode(vacum_relay_on, OUTPUT);
   pinMode(vacum_relay_off, OUTPUT);
+
+  //--- vacum balon initialize ---
+  pinMode(vacumbl_pin, INPUT);
+  pinMode(vacumbl_pump_pin, OUTPUT);
 
   //--- pump initialize ---
   pinMode(pump_pin, OUTPUT);
@@ -101,6 +123,7 @@ void IOPin::setupio()
   waterrelay(false);
   magnitrelay(false);
   pumprelay(false);
+  vacumblPump(false);
   set_ind_err(false);
 }
 
@@ -119,6 +142,36 @@ float IOPin::preasureRead()
   }
 
   return preasure_sensor_curr;
+}
+
+//--- vacum balon sensor ---
+float IOPin::vacumblRead()
+{
+  if (millis() - vacumbl_sensor_millis > vacumbl_pin_tm)
+  {
+    float sn = float(analogRead(vacumbl_pin)) - vacumbl_pin_lovl;
+    sn = sn * (vacumbl_pin_hidp - vacumbl_pin_lodp) / (vacumbl_pin_hivl - vacumbl_pin_lovl);
+    
+    vacumbl_sensor_sum = vacumbl_sensor_sum - vacumbl_sensor_curr + sn;
+    vacumbl_sensor_curr = vacumbl_sensor_sum / vacumbl_pin_cn;
+    
+    vacumbl_sensor_millis = millis();
+  }
+
+  return vacumbl_sensor_curr;
+}
+
+void IOPin::poolsensors()
+{
+  preasureRead();
+  vacumblRead();
+  vacumSensorRead();  
+}
+
+//--- Vacum balon pump ---
+void IOPin::vacumblPump(bool pon)
+{
+  digitalWrite(vacumbl_pump_pin, !pon);
 }
 
 //--- Vacum ---
@@ -148,11 +201,13 @@ bool IOPin::vacumSensorRead()
   return vacum_sensor_curr;
 }
 
+//--- vacum relay on ---
 void IOPin::vacumrelay_on(bool von)
 {
   digitalWrite(vacum_relay_on, !von);
 }
 
+//--- vacum relay off ---
 void IOPin::vacumrelay_off(bool vof)
 {
   digitalWrite(vacum_relay_off, vof);
@@ -188,6 +243,8 @@ void IOPin::set_water(bool won)
     water_step = 0;
     vacumrelay(false,false);
     waterrelay(true);
+    pumprelay(false);
+    vacumblPump(false);
   }
   else
   {
@@ -195,6 +252,7 @@ void IOPin::set_water(bool won)
     vacumrelay(false,true);
     pumprelay(false);
     waterrelay(false);
+    vacumblPump(false);
   }
   Serial.flush();
 }
