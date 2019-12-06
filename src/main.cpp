@@ -77,7 +77,9 @@ void preasureview()
       rs += ",";
     }
     rs += "dp=";
-    rs += String(IOPin::preasureRead());
+    rs += String(IOPin::preasureRead(),2);
+    rs += ",dn=";
+    rs += String(Mth::density(IOPin::preasureRead()),2);
     rs += ",vs=";
     rs += String(IOPin::vacumSensorRead());
     Serial.println(rs);
@@ -131,20 +133,18 @@ void preasurePrintAll()
   rs +=  String(Mth::density(preasure_pd_max[0]),2);
   rs += ",dl1=";
   rs +=  String(Mth::density(preasure_pd_lst[0]),2);
-  float pr1 = Mth::procent_p(preasure_pd_max[0],preasure_pd_lst[0]);
-  rs += ",pr1=";
-  rs +=  String(pr1,2);
-
   rs += ",dh2=";
   rs +=  String(Mth::density(preasure_pd_max[2]),2);
   rs += ",dl2=";
   rs +=  String(Mth::density(preasure_pd_lst[2]),2);
+  float pr1 = Mth::procent_p(preasure_pd_max[0],preasure_pd_lst[0]);
   float pr2 = Mth::procent_m(preasure_pd_max[2],preasure_pd_lst[2]);
+  rs += ",pr1=";
+  rs +=  String(pr1,2);
   rs += ",pr2=";
   rs +=  String(pr2,2);
   rs += ",pr3=";
   rs +=  String(Mth::procent_pm(pr1,pr2),2);
-
 
   Serial.println(rs);
   Serial.flush();
