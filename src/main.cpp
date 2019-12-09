@@ -80,6 +80,8 @@ void preasureview()
     rs += String(IOPin::preasureRead(),2);
     rs += ",dn=";
     rs += String(Mth::density(IOPin::preasureRead()),2);
+    rs += ",vp=";
+    rs += String(IOPin::vacumblRead(),2);
     rs += ",vs=";
     rs += String(IOPin::vacumSensorRead());
     Serial.println(rs);
@@ -157,7 +159,8 @@ void poolpreasure()
   //--- balon pump On ---
   if (preasure_step == 0)
   {
-    if (millis() - preasure_millis > preasure_time[preasure_step])
+    float vbl_p = IOPin::vacumblRead();
+    if (millis() - preasure_millis > preasure_time[preasure_step] ||  vbl_p <= vacumbl_predel)
     {
       IOPin::vacumrelay(false, true);
       IOPin::pumprelay(true);
