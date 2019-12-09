@@ -14,20 +14,20 @@ unsigned long preasure_view_millis = 0;
 const unsigned long preasure_time[] = 
 {
  
-  240000,  // balon pump on
-  10000,   // produvka pump on
-  30000,   // vacum senson check
-  50000,   // zamer dp 0
-  180000,  // zamer dp 1
-  50000    // zamer dp 2
+  240000,  // 0 - balon pump on
+  10000,   // 1 - produvka pump on
+  30000,   // 2 - vacum senson check
+  50000,   // 3 - zamer dp 0
+  180000,  // 4 - zamer dp 1
+  50000    // 5 - zamer dp 2
 
 /*
-  10000,   // balon pump on
-  10000,   // produvka pump on
-  10000,   // vacum senson check
-  10000,   // zamer dp 0
-  10000,   // zamer dp 1
-  10000    // zamer dp 2
+  10000,   // 0 - balon pump on
+  10000,   // 1 - produvka pump on
+  10000,   // 2 - vacum senson check
+  10000,   // 3 - zamer dp 0
+  10000,   // 4 - zamer dp 1
+  10000    // 5 - zamer dp 2
 */
 };
 
@@ -217,7 +217,7 @@ void poolpreasure()
     if (pd > preasure_pd_max[preasure_step_pd])
       preasure_pd_max[preasure_step_pd] = pd;
 
-    if (millis() - preasure_millis > preasure_time[preasure_step_pd])
+    if (millis() - preasure_millis > preasure_time[preasure_step])
     {
       preasure_pd_lst[preasure_step_pd] = pd;
       preasure_step_pd++;
