@@ -13,22 +13,22 @@ unsigned long preasure_view_millis = 0;
 
 const unsigned long preasure_time[] = 
 {
- /* 
+ 
   240000,  // balon pump on
   10000,   // produvka pump on
   30000,   // vacum senson check
-  30000,   // zamer dp 0
+  50000,   // zamer dp 0
   180000,  // zamer dp 1
-  30000    // zamer dp 2
-*/
+  50000    // zamer dp 2
 
+/*
   10000,   // balon pump on
   10000,   // produvka pump on
   10000,   // vacum senson check
   10000,   // zamer dp 0
   10000,   // zamer dp 1
   10000    // zamer dp 2
-
+*/
 };
 
 bool preasure_on = false;
