@@ -158,7 +158,7 @@ void Ekr::print_menu_lv1()
         {
             float pr1 = Mth::procent_p(preasure_pd_max[0],preasure_pd_lst[0]);
             float pr2 = Mth::procent_m(preasure_pd_max[2],preasure_pd_lst[2]);
-            float pr = Mth::procent_p(pr1,pr2);
+            float pr = Mth::procent_pm(pr1,pr2);
             ss += String(pr,2);
         } 
         break;    
