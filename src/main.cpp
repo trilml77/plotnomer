@@ -31,6 +31,8 @@ const unsigned long preasure_time[] =
 */
 };
 
+#define preasure_delay 500U
+
 bool preasure_on = false;
 unsigned int preasure_step = 0;
 unsigned int preasure_step_pd = 0;
@@ -212,10 +214,13 @@ void poolpreasure()
       preasurePrintErr(2);
     }
     */
-   
+
     float pd = IOPin::preasureRead();
+    if (millis() - preasure_millis > preasure_delay)
+    {
     if (pd > preasure_pd_max[preasure_step_pd])
       preasure_pd_max[preasure_step_pd] = pd;
+    }
 
     if (millis() - preasure_millis > preasure_time[preasure_step])
     {
