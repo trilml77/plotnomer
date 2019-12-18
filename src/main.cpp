@@ -161,6 +161,13 @@ void poolpreasure()
   //--- balon pump On ---
   if (preasure_step == 0)
   {
+    bool vsens = IOPin::vacumSensorRead();
+    if (vsens)
+    {
+      set_preasure(false);
+      preasurePrintErr(2);
+    }
+
     float vbl_p = IOPin::vacumblRead();
     if (millis() - preasure_millis > preasure_time[preasure_step] ||  vbl_p <= vacumbl_predel)
     {
@@ -178,6 +185,7 @@ void poolpreasure()
     {
       IOPin::vacumrelay(true, false);
       IOPin::pumprelay(false);
+      IOPin::magnitrelay(true);
       preasure_millis = millis();
       preasure_step++;
     }

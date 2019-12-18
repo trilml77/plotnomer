@@ -32,7 +32,7 @@ unsigned long vacum_sensor_millis = 0;
 #define vacumbl_pin_hidp 250.0  // 250 kPa
 #define vacumbl_pin_tm 100U
 #define vacumbl_pin_cn 5U
-#define vacumbl_predel 55.0 // 55 kPa Predel vacum
+#define vacumbl_predel 65.0 // 55 kPa Predel vacum
 float vacumbl_sensor_curr = 0;
 float vacumbl_sensor_sum = 0;
 unsigned long vacumbl_sensor_millis = 0;
