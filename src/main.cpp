@@ -17,9 +17,9 @@ const unsigned long preasure_time[] =
   240000,  // 0 - balon pump on
   10000,   // 1 - produvka pump on
   30000,   // 2 - vacum senson check
-  50000,   // 3 - zamer dp 0
-  180000,  // 4 - zamer dp 1
-  50000    // 5 - zamer dp 2
+  180000,   // 3 - zamer dp 0
+  60000,  // 4 - zamer dp 1
+  180000    // 5 - zamer dp 2
 
 /*
   10000,   // 0 - balon pump on
