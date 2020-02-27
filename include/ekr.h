@@ -82,7 +82,8 @@ void Ekr::printekr()
     }
 
     ss += " Vs:";
-    if (IOPin::vacumSensorRead()) ss+="ON "; else ss+="OFF";
+    if (IOPin::vacumErrSensorRead()) ss+="Err";
+    else if (IOPin::vacumSensorRead()) ss+="ON "; else ss+="OFF";
 
     while (ss.length()<16) ss+=" ";
     lcd.setCursor(0,0);

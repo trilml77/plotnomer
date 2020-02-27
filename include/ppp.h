@@ -24,6 +24,13 @@ bool vacum_sensor_curr = 0;
 bool vacum_sensor_new = 0;
 unsigned long vacum_sensor_millis = 0;
 
+//--- vacum error sensor define ---
+#define vacum_err_sensor_pin A3
+#define vacum_err_sensor_delay 10U
+bool vacum_err_sensor_curr = 0;
+bool vacum_err_sensor_new = 0;
+unsigned long vacum_err_sensor_millis = 0;
+
 //--- vacum balon sensor ---
 #define vacumbl_pin A2
 #define vacumbl_pin_lovl 204.0  // 1V
@@ -75,6 +82,7 @@ namespace IOPin
   float preasureRead();
   void vacumrelay(bool von, bool voff);
   bool vacumSensorRead();
+  bool vacumErrSensorRead();
   void vacumrelay_on(bool von);
   void vacumrelay_off(bool vof);
   void magnitrelay(bool mon);
@@ -98,6 +106,7 @@ void IOPin::setupio()
   pinMode(vacum_sensor_pin, INPUT);
   pinMode(vacum_relay_on, OUTPUT);
   pinMode(vacum_relay_off, OUTPUT);
+  pinMode(vacum_err_sensor_pin, INPUT);
 
   //--- vacum balon initialize ---
   pinMode(vacumbl_pin, INPUT);
@@ -164,9 +173,10 @@ float IOPin::vacumblRead()
 
 void IOPin::poolsensors()
 {
-  preasureRead();
-  vacumblRead();
+  vacumErrSensorRead();
   vacumSensorRead();  
+  vacumblRead();
+  preasureRead();
 }
 
 //--- Vacum balon pump ---
@@ -200,6 +210,26 @@ bool IOPin::vacumSensorRead()
   }
 
   return vacum_sensor_curr;
+}
+
+bool IOPin::vacumErrSensorRead()
+{
+  bool vsens = !digitalRead(vacum_err_sensor_pin);
+
+  if (vsens != vacum_err_sensor_new)
+  {
+    vacum_err_sensor_new = vsens;
+    vacum_err_sensor_millis = millis();
+  }
+
+  if (millis() - vacum_err_sensor_millis > vacum_err_sensor_delay)
+  {
+    if (vacum_err_sensor_new == vsens)
+      vacum_err_sensor_curr = vsens;
+    vacum_err_sensor_millis = millis();
+  }
+
+  return vacum_err_sensor_curr;
 }
 
 //--- vacum relay on ---
@@ -261,6 +291,11 @@ void IOPin::set_water(bool won)
 void IOPin::poolwater()
 {
   if (!water_on) return;
+
+  if (vacumErrSensorRead())
+  {
+    set_water(false);
+  }
   
   switch (water_step)
   {

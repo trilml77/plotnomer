@@ -158,6 +158,12 @@ void poolpreasure()
 {
   if (!preasure_on) return;
 
+  if (IOPin::vacumErrSensorRead())
+  {
+    set_preasure(false);
+    preasurePrintErr(3);
+  }
+
   //--- balon pump On ---
   if (preasure_step == 0)
   {
