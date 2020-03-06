@@ -19,7 +19,7 @@ unsigned long preasure_sensor_millis = 0;
 #define vacum_sensor_pin 3
 #define vacum_relay_on 4
 #define vacum_relay_off 5
-#define vacum_sensor_delay 200U
+#define vacum_sensor_delay 100U
 bool vacum_sensor_curr = 0;
 bool vacum_sensor_new = 0;
 unsigned long vacum_sensor_millis = 0;
@@ -39,7 +39,7 @@ unsigned long vacum_err_sensor_millis = 0;
 #define vacumbl_pin_hidp 250.0  // 250 kPa
 #define vacumbl_pin_tm 100U
 #define vacumbl_pin_cn 5U
-#define vacumbl_predel 55.0 // 55 kPa Predel vacum
+#define vacumbl_predel 30.0 // 30 kPa Predel vacum
 float vacumbl_sensor_curr = 0;
 float vacumbl_sensor_sum = 0;
 unsigned long vacumbl_sensor_millis = 0;
